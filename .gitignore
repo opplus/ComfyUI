@@ -18,3 +18,6 @@ venv/
 /tests-ui/data/object_info.json
 /user/
 *.log
+pysssss-workflows/*
+my_workflows/*
+huggingface/*
