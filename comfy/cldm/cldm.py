@@ -92,7 +92,7 @@ class ControlNet(nn.Module):
         transformer_depth_middle=None,
         transformer_depth_output=None,
         attn_precision=None,
-        union_controlnet=False,
+        union_controlnet_num_control_type=None,
         device=None,
         operations=comfy.ops.disable_weight_init,
         **kwargs,
@@ -320,8 +320,8 @@ class ControlNet(nn.Module):
         self.middle_block_out = self.make_zero_conv(ch, operations=operations, dtype=self.dtype, device=device)
         self._feature_size += ch
 
-        if union_controlnet:
-            self.num_control_type = 6
+        if union_controlnet_num_control_type is not None:
+            self.num_control_type = union_controlnet_num_control_type
             num_trans_channel = 320
             num_trans_head = 8
             num_trans_layer = 1
@@ -361,7 +361,7 @@ class ControlNet(nn.Module):
             controlnet_cond = self.input_hint_block(hint[idx], emb, context)
             feat_seq = torch.mean(controlnet_cond, dim=(2, 3))
             if idx < len(control_type):
-                feat_seq += self.task_embedding[control_type[idx]]
+                feat_seq += self.task_embedding[control_type[idx]].to(dtype=feat_seq.dtype, device=feat_seq.device)
 
             inputs.append(feat_seq.unsqueeze(1))
             condition_list.append(controlnet_cond)

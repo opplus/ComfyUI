@@ -21,3 +21,4 @@ venv/
 pysssss-workflows/*
 my_workflows/*
 huggingface/*
+web_custom_versions/
