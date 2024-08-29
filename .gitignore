@@ -18,12 +18,9 @@ venv/
 /tests-ui/data/object_info.json
 /user/
 *.log
-<<<<<<< HEAD
 pysssss-workflows/*
 my_workflows/*
 huggingface/*
 web_custom_versions/
-=======
-web_custom_versions/
 .DS_Store
->>>>>>> 3e52e0364cf81764f58e5aa4f53f0b702f4d4a81
+flux_lora_output_path/*
