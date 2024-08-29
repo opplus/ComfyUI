@@ -18,9 +18,10 @@ venv/
 /tests-ui/data/object_info.json
 /user/
 *.log
+pysssss-workflows/*
+my_workflows/*
+huggingface/*
 web_custom_versions/
 .DS_Store
 flux_lora_output_path/
-huggingface/
-my_workflows/
-pysssss-workflows/
+taming/*
