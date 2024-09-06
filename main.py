@@ -1,3 +1,6 @@
+import json
+import traceback
+
 import comfy.options
 comfy.options.enable_args_parsing()
 
@@ -123,6 +126,11 @@ def prompt_worker(q, server):
             server.last_prompt_id = prompt_id
 
             logging.info(f"[{prompt_id}] start execute")
+            try:
+                logging.info(f"[{prompt_id}] prompt {json.dumps(item[2])}")
+            except Exception:
+                logging.error(traceback.format_exc())
+
 
             e.execute(item[2], prompt_id, item[3], item[4])
             need_gc = True
