@@ -221,6 +221,12 @@ class PromptServer():
         def get_embeddings(self):
             embeddings = folder_paths.get_filename_list("embeddings")
             return web.json_response(list(map(lambda a: os.path.splitext(a)[0], embeddings)))
+        
+        @routes.get("/models")
+        def list_model_types(request):
+            model_types = list(folder_paths.folder_names_and_paths.keys())
+
+            return web.json_response(model_types)
 
         @routes.get("/models/{folder}")
         async def get_models(request):
@@ -484,12 +490,17 @@ class PromptServer():
         async def system_stats(request):
             device = comfy.model_management.get_torch_device()
             device_name = comfy.model_management.get_torch_device_name(device)
+            cpu_device = comfy.model_management.torch.device("cpu")
+            ram_total = comfy.model_management.get_total_memory(cpu_device)
+            ram_free = comfy.model_management.get_free_memory(cpu_device)
             vram_total, torch_vram_total = comfy.model_management.get_total_memory(device, torch_total_too=True)
             vram_free, torch_vram_free = comfy.model_management.get_free_memory(device, torch_free_too=True)
 
             system_stats = {
                 "system": {
                     "os": os.name,
+                    "ram_total": ram_total,
+                    "ram_free": ram_free,
                     "comfyui_version": get_comfyui_version(),
                     "python_version": sys.version,
                     "pytorch_version": comfy.model_management.torch_version,
@@ -546,14 +557,15 @@ class PromptServer():
 
         @routes.get("/object_info")
         async def get_object_info(request):
-            out = {}
-            for x in nodes.NODE_CLASS_MAPPINGS:
-                try:
-                    out[x] = node_info(x)
-                except Exception as e:
-                    logging.error(f"[ERROR] An error occurred while retrieving information for the '{x}' node.")
-                    logging.error(traceback.format_exc())
-            return web.json_response(out)
+            with folder_paths.cache_helper:
+                out = {}
+                for x in nodes.NODE_CLASS_MAPPINGS:
+                    try:
+                        out[x] = node_info(x)
+                    except Exception as e:
+                        logging.error(f"[ERROR] An error occurred while retrieving information for the '{x}' node.")
+                        logging.error(traceback.format_exc())
+                return web.json_response(out)
 
         @routes.get("/object_info/{node_class}")
         async def get_object_info_node(request):

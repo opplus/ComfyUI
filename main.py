@@ -244,10 +244,16 @@ if __name__ == "__main__":
         input_dir = os.path.abspath(args.input_directory)
         logging.info(f"Setting input directory to: {input_dir}")
         folder_paths.set_input_directory(input_dir)
+    
+    if args.user_directory:
+        user_dir = os.path.abspath(args.user_directory)
+        logging.info(f"Setting user directory to: {user_dir}")
+        folder_paths.set_user_directory(user_dir)
 
     if args.quick_test_for_ci:
         exit(0)
 
+    os.makedirs(folder_paths.get_temp_directory(), exist_ok=True)
     call_on_start = None
     if args.auto_launch:
         def startup_server(scheme, address, port):
