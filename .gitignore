@@ -26,5 +26,5 @@ web_custom_versions/
 flux_lora_output_path/
 taming/*
 deploy_all.sh
-
 web_bask
+models
