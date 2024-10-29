@@ -28,3 +28,5 @@ taming/*
 deploy_all.sh
 my_workflows/*
 web_bask
+models
+models/
