@@ -28,3 +28,5 @@ taming/*
 deploy_all.sh
 web_bask
 models
+input
+output
