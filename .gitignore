@@ -25,4 +25,6 @@ web_custom_versions/
 .DS_Store
 flux_lora_output_path/
 taming/*
+deploy_all.sh
+
 web_bask
