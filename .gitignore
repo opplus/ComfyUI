@@ -25,3 +25,4 @@ web_custom_versions/
 .DS_Store
 flux_lora_output_path/
 taming/*
+web_bask
