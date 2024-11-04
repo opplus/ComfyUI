@@ -26,5 +26,10 @@ web_custom_versions/
 flux_lora_output_path/
 taming/*
 deploy_all.sh
+my_workflows/*
 web_bask
+input
+output
+custom_nodes
 models
+my_workflows

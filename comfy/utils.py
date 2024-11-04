@@ -316,10 +316,18 @@ MMDIT_MAP_BLOCK = {
     ("context_block.mlp.fc1.weight", "ff_context.net.0.proj.weight"),
     ("context_block.mlp.fc2.bias", "ff_context.net.2.bias"),
     ("context_block.mlp.fc2.weight", "ff_context.net.2.weight"),
+    ("context_block.attn.ln_q.weight", "attn.norm_added_q.weight"),
+    ("context_block.attn.ln_k.weight", "attn.norm_added_k.weight"),
     ("x_block.adaLN_modulation.1.bias", "norm1.linear.bias"),
     ("x_block.adaLN_modulation.1.weight", "norm1.linear.weight"),
     ("x_block.attn.proj.bias", "attn.to_out.0.bias"),
     ("x_block.attn.proj.weight", "attn.to_out.0.weight"),
+    ("x_block.attn.ln_q.weight", "attn.norm_q.weight"),
+    ("x_block.attn.ln_k.weight", "attn.norm_k.weight"),
+    ("x_block.attn2.proj.bias", "attn2.to_out.0.bias"),
+    ("x_block.attn2.proj.weight", "attn2.to_out.0.weight"),
+    ("x_block.attn2.ln_q.weight", "attn2.norm_q.weight"),
+    ("x_block.attn2.ln_k.weight", "attn2.norm_k.weight"),
     ("x_block.mlp.fc1.bias", "ff.net.0.proj.bias"),
     ("x_block.mlp.fc1.weight", "ff.net.0.proj.weight"),
     ("x_block.mlp.fc2.bias", "ff.net.2.bias"),
@@ -348,6 +356,12 @@ def mmdit_to_diffusers(mmdit_config, output_prefix=""):
             key_map["{}add_q_proj.{}".format(k, end)] = (qkv, (0, 0, offset))
             key_map["{}add_k_proj.{}".format(k, end)] = (qkv, (0, offset, offset))
             key_map["{}add_v_proj.{}".format(k, end)] = (qkv, (0, offset * 2, offset))
+
+            k = "{}.attn2.".format(block_from)
+            qkv = "{}.x_block.attn2.qkv.{}".format(block_to, end)
+            key_map["{}to_q.{}".format(k, end)] = (qkv, (0, 0, offset))
+            key_map["{}to_k.{}".format(k, end)] = (qkv, (0, offset, offset))
+            key_map["{}to_v.{}".format(k, end)] = (qkv, (0, offset * 2, offset))
 
         for k in MMDIT_MAP_BLOCK:
             key_map["{}.{}".format(block_from, k[1])] = "{}.{}".format(block_to, k[0])
@@ -731,7 +745,27 @@ def get_tiled_scale_steps(width, height, tile_x, tile_y, overlap):
 @torch.inference_mode()
 def tiled_scale_multidim(samples, function, tile=(64, 64), overlap = 8, upscale_amount = 4, out_channels = 3, output_device="cpu", pbar = None):
     dims = len(tile)
-    output = torch.empty([samples.shape[0], out_channels] + list(map(lambda a: round(a * upscale_amount), samples.shape[2:])), device=output_device)
+
+    if not (isinstance(upscale_amount, (tuple, list))):
+        upscale_amount = [upscale_amount] * dims
+
+    if not (isinstance(overlap, (tuple, list))):
+        overlap = [overlap] * dims
+
+    def get_upscale(dim, val):
+        up = upscale_amount[dim]
+        if callable(up):
+            return up(val)
+        else:
+            return up * val
+
+    def mult_list_upscale(a):
+        out = []
+        for i in range(len(a)):
+            out.append(round(get_upscale(i, a[i])))
+        return out
+
+    output = torch.empty([samples.shape[0], out_channels] + mult_list_upscale(samples.shape[2:]), device=output_device)
 
     for b in range(samples.shape[0]):
         s = samples[b:b+1]
@@ -743,27 +777,27 @@ def tiled_scale_multidim(samples, function, tile=(64, 64), overlap = 8, upscale_
                 pbar.update(1)
             continue
 
-        out = torch.zeros([s.shape[0], out_channels] + list(map(lambda a: round(a * upscale_amount), s.shape[2:])), device=output_device)
-        out_div = torch.zeros([s.shape[0], out_channels] + list(map(lambda a: round(a * upscale_amount), s.shape[2:])), device=output_device)
+        out = torch.zeros([s.shape[0], out_channels] + mult_list_upscale(s.shape[2:]), device=output_device)
+        out_div = torch.zeros([s.shape[0], out_channels] + mult_list_upscale(s.shape[2:]), device=output_device)
 
-        positions = [range(0, s.shape[d+2], tile[d] - overlap) if s.shape[d+2] > tile[d] else [0] for d in range(dims)]
+        positions = [range(0, s.shape[d+2], tile[d] - overlap[d]) if s.shape[d+2] > tile[d] else [0] for d in range(dims)]
 
         for it in itertools.product(*positions):
             s_in = s
             upscaled = []
 
             for d in range(dims):
-                pos = max(0, min(s.shape[d + 2] - overlap, it[d]))
+                pos = max(0, min(s.shape[d + 2] - (overlap[d] + 1), it[d]))
                 l = min(tile[d], s.shape[d + 2] - pos)
                 s_in = s_in.narrow(d + 2, pos, l)
-                upscaled.append(round(pos * upscale_amount))
+                upscaled.append(round(get_upscale(d, pos)))
 
             ps = function(s_in).to(output_device)
             mask = torch.ones_like(ps)
-            feather = round(overlap * upscale_amount)
 
-            for t in range(feather):
-                for d in range(2, dims + 2):
+            for d in range(2, dims + 2):
+                feather = round(get_upscale(d - 2, overlap[d - 2]))
+                for t in range(feather):
                     a = (t + 1) / feather
                     mask.narrow(d, t, 1).mul_(a)
                     mask.narrow(d, mask.shape[d] - 1 - t, 1).mul_(a)
