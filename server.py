@@ -2,6 +2,7 @@ import os
 import sys
 import asyncio
 import traceback
+from datetime import datetime
 
 import nodes
 import folder_paths
@@ -623,10 +624,16 @@ class PromptServer():
                 if "client_id" in json_data:
                     extra_data["client_id"] = json_data["client_id"]
                 if valid[0]:
-                    prompt_id = str(uuid.uuid4())
+                    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+                    prompt_id = f'{timestamp}_{str(uuid.uuid4()).replace("-", "")}'
+                    if "out_task_id" in json_data:
+                        out_task_id=json_data["out_task_id"]
+                        if out_task_id is not None and len(str.strip(out_task_id))>0:
+                            prompt_id = out_task_id
                     outputs_to_execute = valid[2]
                     self.prompt_queue.put((number, prompt_id, prompt, extra_data, outputs_to_execute))
                     response = {"prompt_id": prompt_id, "number": number, "node_errors": valid[3]}
+                    logging.info(f"queue prompt_id:{prompt_id}, number:{number}")
                     return web.json_response(response)
                 else:
                     logging.warning("invalid prompt: {}".format(valid[1]))
