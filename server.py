@@ -38,6 +38,8 @@ class BinaryEventTypes:
     PREVIEW_IMAGE = 1
     UNENCODED_PREVIEW_IMAGE = 2
 
+all_node_cache=None
+
 async def send_socket_catch_exception(function, message):
     try:
         await function(message)
@@ -559,6 +561,9 @@ class PromptServer():
         @routes.get("/object_info")
         async def get_object_info(request):
             with folder_paths.cache_helper:
+                global all_node_cache
+                if all_node_cache is not None and len(all_node_cache)>0:
+                    return web.json_response(all_node_cache)
                 out = {}
                 for x in nodes.NODE_CLASS_MAPPINGS:
                     try:
@@ -566,6 +571,7 @@ class PromptServer():
                     except Exception as e:
                         logging.error(f"[ERROR] An error occurred while retrieving information for the '{x}' node.")
                         logging.error(traceback.format_exc())
+                all_node_cache=out
                 return web.json_response(out)
 
         @routes.get("/object_info/{node_class}")
