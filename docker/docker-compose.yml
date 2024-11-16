@@ -1,0 +1,24 @@
+services:
+  comfyui:
+    init: true
+    container_name: comfyui
+    image: "registry.cn-hangzhou.aliyuncs.com/dlm-business/comfyui:2024111501"
+    ports:
+      - "8188:8188"
+    volumes:
+      - "/home/star/ssd/ssd_2/comfy/models:/root/comfyui/models"
+      - "/home/star/ssd/ssd_2/comfy/my_workflows:/root/comfyui/my_workflows"
+      - "/home/star/ssd/ssd_2/comfy/custom_nodes:/root/comfyui/custom_nodes"
+      - "/home/star/ssd/ssd_2/comfy/workspace/1103:/root/comfyui/workspace"
+    environment:
+      - CLI_ARGS=--disable-smart-memory --disable-metadata
+    security_opt:
+      - "label=type:nvidia_container_t"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ['0']
+              capabilities: [gpu]
+
