@@ -2056,6 +2056,7 @@ def init_external_custom_nodes():
     node_paths = folder_paths.get_folder_paths("custom_nodes")
     # 增加排序
     node_paths=sorted(node_paths,reverse=True)
+    print(node_paths)
     node_import_times = []
     for custom_node_path in node_paths:
         possible_modules = os.listdir(os.path.realpath(custom_node_path))
