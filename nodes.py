@@ -2054,15 +2054,14 @@ def init_external_custom_nodes():
     """
     base_node_names = set(NODE_CLASS_MAPPINGS.keys())
     node_paths = folder_paths.get_folder_paths("custom_nodes")
-    # 增加排序
-    node_paths=sorted(node_paths,reverse=True)
-    logging.info(f"\n sorted node_paths >>> {node_paths}")
     node_import_times = []
     for custom_node_path in node_paths:
         possible_modules = os.listdir(os.path.realpath(custom_node_path))
         if "__pycache__" in possible_modules:
             possible_modules.remove("__pycache__")
-
+        # 增加排序
+        possible_modules = sorted(possible_modules)
+        logging.info(f"\n sorted possible_modules >>> {possible_modules}")
         for possible_module in possible_modules:
             module_path = os.path.join(custom_node_path, possible_module)
             logging.info(f"\nImport >>> {module_path}")
