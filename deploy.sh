@@ -55,11 +55,11 @@ if [ "$auto_restart" = "true" ]; then
 
     # 使用 nohup 直接运行整个循环
     nohup bash -c 'while true; do
-        sleep 10  # 每10秒检查一次
-        pid=$(pgrep -f "python.*main.py.*--port '$port'.* --cuda-device")
+        sleep 60  # 每10秒检查一次
+        pid=$(ps aux | grep "python.*main.py.*--port '$port'" |grep -v "while true;" |grep "listen" | awk "{print $2}")
         if [ -z "$pid" ]; then
             echo "Process on port '$port' has exited. Restarting..."
-            start_server
+            nohup python "'$wk_dir'/main.py" --port '$port' --listen 0.0.0.0 --cuda-device '$device_id' --disable-smart-memory --disable-metadata > "'$port'.log" 2>&1 &
         else
             echo "Process Alive on port '$port' in $pid"
         fi
