@@ -2064,7 +2064,9 @@ def init_external_custom_nodes():
         possible_modules = os.listdir(os.path.realpath(custom_node_path))
         if "__pycache__" in possible_modules:
             possible_modules.remove("__pycache__")
-
+        # 增加排序
+        possible_modules = sorted(possible_modules)
+        logging.info(f"\n sorted possible_modules >>> {possible_modules}")
         for possible_module in possible_modules:
             module_path = os.path.join(custom_node_path, possible_module)
             logging.info(f"\nImport >>> {module_path}")
