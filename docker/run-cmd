@@ -1,0 +1,6 @@
+docker run -it --rm -d \
+  --gpus=all  \
+  --name comfyui-fc \
+  -p 9000:9000 \
+  -e CLI_ARGS="" \
+  registry.cn-hangzhou.aliyuncs.com/ohyee/fc-demo:fc-comfyui-lite-v5
