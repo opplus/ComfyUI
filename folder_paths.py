@@ -55,10 +55,10 @@ folder_names_and_paths["movements"] = ([movements_dir], supported_artist_extensi
 styles_dir = os.path.join(base_path, "custom_nodes", "ComfyUI-ArtGallery", "img_lists", "styles")
 folder_names_and_paths["styles"] = ([styles_dir], supported_artist_extensions)
 
-output_directory = os.path.join(os.path.dirname(os.path.realpath(__file__)), "output")
-temp_directory = os.path.join(os.path.dirname(os.path.realpath(__file__)), "temp")
-input_directory = os.path.join(os.path.dirname(os.path.realpath(__file__)), "input")
-user_directory = os.path.join(os.path.dirname(os.path.realpath(__file__)), "user")
+output_directory = os.path.join(base_path, "output")
+temp_directory = os.path.join(base_path, "temp")
+input_directory = os.path.join(base_path, "input")
+user_directory = os.path.join(base_path, "user")
 
 filename_list_cache: dict[str, tuple[list[str], dict[str, float], float]] = {}
 
@@ -74,7 +74,7 @@ class CacheHelper:
         if not self.active:
             return default
         return self.cache.get(key, default)
-    
+
     def set(self, key: str, value: tuple[list[str], dict[str, float], float]) -> None:
         if self.active:
             self.cache[key] = value
@@ -226,10 +226,17 @@ def add_model_folder_path(folder_name: str, full_folder_path: str, is_default: b
     global folder_names_and_paths
     folder_name = map_legacy(folder_name)
     if folder_name in folder_names_and_paths:
-        if is_default:
-            folder_names_and_paths[folder_name][0].insert(0, full_folder_path)
+        paths, _exts = folder_names_and_paths[folder_name]
+        if full_folder_path in paths:
+            if is_default and paths[0] != full_folder_path:
+                # If the path to the folder is not the first in the list, move it to the beginning.
+                paths.remove(full_folder_path)
+                paths.insert(0, full_folder_path)
         else:
-            folder_names_and_paths[folder_name][0].append(full_folder_path)
+            if is_default:
+                paths.insert(0, full_folder_path)
+            else:
+                paths.append(full_folder_path)
     else:
         folder_names_and_paths[folder_name] = ([full_folder_path], set())
 
@@ -324,7 +331,7 @@ def cached_filename_list_(folder_name: str) -> tuple[list[str], dict[str, float]
     strong_cache = cache_helper.get(folder_name)
     if strong_cache is not None:
         return strong_cache
-    
+
     global filename_list_cache
     global folder_names_and_paths
     folder_name = map_legacy(folder_name)

@@ -172,7 +172,6 @@ class T5LayerSelfAttention(torch.nn.Module):
         # self.dropout = nn.Dropout(config.dropout_rate)
 
     def forward(self, x, mask=None, past_bias=None, optimized_attention=None):
-        normed_hidden_states = self.layer_norm(x)
         output, past_bias = self.SelfAttention(self.layer_norm(x), mask=mask, past_bias=past_bias, optimized_attention=optimized_attention)
         # x = x + self.dropout(attention_output)
         x += output
@@ -228,8 +227,9 @@ class T5(torch.nn.Module):
         super().__init__()
         self.num_layers = config_dict["num_layers"]
         model_dim = config_dict["d_model"]
+        inner_dim = config_dict["d_kv"] * config_dict["num_heads"]
 
-        self.encoder = T5Stack(self.num_layers, model_dim, model_dim, config_dict["d_ff"], config_dict["dense_act_fn"], config_dict["is_gated_act"], config_dict["num_heads"], config_dict["model_type"] != "umt5", dtype, device, operations)
+        self.encoder = T5Stack(self.num_layers, model_dim, inner_dim, config_dict["d_ff"], config_dict["dense_act_fn"], config_dict["is_gated_act"], config_dict["num_heads"], config_dict["model_type"] != "umt5", dtype, device, operations)
         self.dtype = dtype
         self.shared = operations.Embedding(config_dict["vocab_size"], model_dim, device=device, dtype=dtype)
 
