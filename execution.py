@@ -1,3 +1,4 @@
+import os
 import sys
 import copy
 import logging
@@ -426,12 +427,43 @@ def execute(server, dynprompt, caches, current_item, extra_data, executed, promp
         if isinstance(ex, comfy.model_management.OOM_EXCEPTION):
             logging.error("Got an OOM, unloading all loaded models.")
             comfy.model_management.unload_all_models()
+            # reboot
+            restart()
 
         return (ExecutionResult.FAILURE, error_details, ex)
 
     executed.add(unique_id)
 
     return (ExecutionResult.SUCCESS, None, None)
+
+def restart():
+    try:
+        sys.stdout.close_log()
+    except Exception:
+        pass
+
+    if '__COMFY_CLI_SESSION__' in os.environ:
+        with open(os.path.join(os.environ['__COMFY_CLI_SESSION__'] + '.reboot'), 'w'):
+            pass
+        print("\nRestarting...\n\n")  # This printing should not be logging - that will be ugly
+        exit(0)
+
+    print("\nRestarting... [Legacy Mode]\n\n")  # This printing should not be logging - that will be ugly
+
+    sys_argv = sys.argv.copy()
+    if '--windows-standalone-build' in sys_argv:
+        sys_argv.remove('--windows-standalone-build')
+
+    if sys.platform.startswith('win32'):
+        cmds = ['"' + sys.executable + '"', '"' + sys_argv[0] + '"'] + sys_argv[1:]
+    elif sys_argv[0].endswith("__main__.py"):  # this is a python module
+        module_name = os.path.basename(os.path.dirname(sys_argv[0]))
+        cmds = [sys.executable, '-m', module_name] + sys_argv[1:]
+    else:
+        cmds = [sys.executable] + sys_argv
+
+    print(f"Command: {cmds}", flush=True)
+    os.execv(sys.executable, cmds)
 
 class PromptExecutor:
     def __init__(self, server, cache_type=False, cache_size=None):
