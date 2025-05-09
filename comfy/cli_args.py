@@ -128,6 +128,7 @@ vram_group.add_argument("--cpu", action="store_true", help="To use the CPU for e
 
 parser.add_argument("--reserve-vram", type=float, default=None, help="Set the amount of vram in GB you want to reserve for use by your OS/other software. By default some amount is reserved depending on your OS.")
 
+parser.add_argument("--async-offload", action="store_true", help="Use async weight offloading.")
 
 parser.add_argument("--default-hashing-function", type=str, choices=['md5', 'sha1', 'sha256', 'sha512'], default='sha256', help="Allows you to choose the hash function to use for duplicate filename / contents comparison. Default is sha256.")
 
@@ -147,6 +148,7 @@ parser.add_argument("--windows-standalone-build", action="store_true", help="Win
 
 parser.add_argument("--disable-metadata", action="store_true", help="Disable saving prompt metadata in files.")
 parser.add_argument("--disable-all-custom-nodes", action="store_true", help="Disable loading all custom nodes.")
+parser.add_argument("--disable-api-nodes", action="store_true", help="Disable loading all api nodes.")
 
 parser.add_argument("--multi-user", action="store_true", help="Enables per-user storage.")
 
@@ -190,6 +192,13 @@ parser.add_argument(
 parser.add_argument("--user-directory", type=is_valid_directory, default=None, help="Set the ComfyUI user directory with an absolute path. Overrides --base-directory.")
 
 parser.add_argument("--enable-compress-response-body", action="store_true", help="Enable compressing response body.")
+
+parser.add_argument(
+    "--comfy-api-base",
+    type=str,
+    default="https://api.comfy.org",
+    help="Set the base URL for the ComfyUI API.  (default: https://api.comfy.org)",
+)
 
 if comfy.options.args_parsing:
     args = parser.parse_args()

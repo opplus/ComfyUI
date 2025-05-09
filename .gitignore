@@ -50,3 +50,6 @@ share/
 styles/
 tests/data/
 tmp.png
+openapi.yaml
+filtered-openapi.yaml
+uv.lock
